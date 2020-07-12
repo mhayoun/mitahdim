@@ -1,0 +1,416 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<!--https://codewithmark.com/easily-edit-html-table-rows-or-cells-with-jquery-->
+<!--https://www.tutorialrepublic.com/faq/how-to-get-the-value-of-selected-option-in-a-select-box-using-jquery.php-->
+<head>
+    <meta charset="UTF-8">
+    <title>data</title>
+
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css">-->
+
+    <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.min.css" >
+    <link rel="stylesheet" href="css/bootstrap-rtl.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript" src="js/my_utils.js"></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id" content="929259322531-d1kkcd4mb92naltvu8i4t6ecbjih0jem.apps.googleusercontent.com">
+</head>
+
+<body>
+
+<script type="text/javascript">
+$(document).ready(function($)
+{
+    console.log('edit.html....')
+    var json_obj_dico;
+    call_loadJSON('data/dico/dico.json');
+    function call_loadJSON(json_file){
+        console.log('call_loadJSON...json_file=<'.concat(json_file,'>'))
+        console.log('call_loadJSON...pwd = <'.concat(window.location.pathname,'>'))
+        loadJSON(json_file, function (json_string) {
+            console.log('json_string='+json_string)
+            json_obj_dico = JSON.parse(json_string);
+            var json_obj;
+            var crt_sub_cat_path='';
+            //$("#div_data").hide();
+            //load cat/sub_cat
+            //simulation
+            if (location.hostname === "localhost" || location.hostname === "127.0.0.1"){
+                console.log("It's a local server!");
+                var map_cats = new Map();
+                response = 'area,area0.json,area1.json,area2.json;dico,dico.json;knesset,knesset.json;biz;gmahim,chairs.json,tables.json'
+                set_map_cats(response, map_cats);
+                console.log(map_cats);
+                fill_cat_list(map_cats)
+            }
+            else {
+                //real
+                //get arborescence cat/sub_cat according to folder/files
+                // under folder knesset there is one file knesset.json
+                // under folder biz    there is nothing
+                // under folder gmahim      there are chairs.json, tables.json
+                //response is like 'knesset,knesset.json;biz;gmahim,chairs.json,tables.json'
+                dir = "E:\\web\\yelotagc\\mitahdim04\\data";
+                var fd = new FormData();
+                fd.append('dir', dir);
+                $.ajax({
+                    url: 'php/listdir.php',
+                    type: 'post',
+                    data: fd,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        if (response != 0) {
+                            console.log(response);
+                            var map_cats = new Map();
+                            set_map_cats(response, map_cats);
+                            console.log(map_cats)
+                            fill_cat_list(map_cats)
+                        } else {
+                            console.log('failed')
+                        }
+                    },
+                    error: function () {
+                        console.log('error listdir.php...')
+                    }
+                });
+            }
+            // <div style="width: 100px">
+            //     <label class="input-group-text">קטגוריה</label>
+            // </div>
+            // <select class="custom-select cat">
+            //     <option selected>נא לבחור אחד מהרשימה</option>
+            //     <option value="gmahim">גמחים</option>
+            //     <option value="knesset">בתי כנסת</option>
+            //     <option value="biz">בית עסק</option>
+            // </select>
+            function fill_cat_list(map_cats){
+                //update select list cats/sub_cats...
+                console.log('fill_cat_list')
+                sel_cat = get_select_html('קטגוריה','cat')
+                // iterate over keys
+                for (let cat_name of map_cats.keys()) {
+                    console.log('-----------------------------------------')
+                    console.log(cat_name)
+                    if (json_obj_dico.hasOwnProperty(cat_name)==false){
+                        console.log(cat_name + ' is missing in dico')
+                        sel_cat += '<option value="'+cat_name+'">'+cat_name+'</option>'
+                        continue
+                    }
+                    sel_cat += '<option value="'+cat_name+'">'+json_obj_dico[cat_name][0]+'</option>'
+                }
+                sel_cat += ' </select>'
+                // set the class categories with all the options
+                $(document).find('.categories').html(sel_cat);
+                console.log('categories filled....')
+                $("select.cat").change(function(){
+                    var cat = $(this).children("option:selected").val();
+                    console.log("You have selected the cat :" + cat);
+
+                    //if cat contains only sub_cat no need to display sub_cat
+                    //but display directly the content of the file.....
+                    if (map_cats.get(cat).length==1){
+                        sub_cat = map_cats.get(cat)[0]
+                        crt_sub_cat_path = 'data/'.concat(cat,'/',sub_cat)
+                        $(document).find('.sub_categories').html('');
+                        call_loadJSON(crt_sub_cat_path);
+                        return;
+                    }
+
+                    sel_sub_cat = get_select_html('תת קטגוריה','sub_cat')
+                    for (let sub_cat_name of map_cats.get(cat)) {
+                        console.log(sub_cat_name)
+                        if(!json_obj_dico.hasOwnProperty(sub_cat_name)){
+                            console.log(sub_cat_name+' not defined in dico')
+                            sel_sub_cat += '<option value="'+sub_cat_name+'">'+sub_cat_name+'</option>'
+                        }
+                        else{
+                            sel_sub_cat += '<option value="'+sub_cat_name+'">'+json_obj_dico[sub_cat_name][0]+'</option>'
+                        }
+                    }
+                    sel_sub_cat += ' </select>'
+                    $(document).find('.sub_categories').html(sel_sub_cat);
+
+                    $("select.sub_cat").change(function(){
+                        var sub_cat = $(this).children("option:selected").val();
+                        console.log("You have selected the sub_cat :" + sub_cat);
+                        crt_sub_cat_path = 'data/'.concat(cat,'/',sub_cat)
+                        call_loadJSON(crt_sub_cat_path);
+                    });
+                });
+            }
+            function call_loadJSON(json_file){
+                console.log('call_loadJSON...json_file=<'.concat(json_file,'>'))
+                console.log('call_loadJSON...pwd = <'.concat(window.location.pathname,'>'))
+
+                loadJSON(json_file, function (response) {
+                    // Parse JSON string into object
+                    console.log(response)
+                    json_obj = JSON.parse(response);
+
+                    var random_id = function  ()
+                    {
+                        var id_num = Math.random().toString(9).substr(2,3);
+                        var id_str = Math.random().toString(36).substr(2);
+                        return id_num + id_str;
+                    }
+
+                    //--->create data table > start
+                    var tbl = '';
+                    tbl += '<table class="table table-hover">';
+                    //--->create table header > start
+                    tbl +='<thead>';
+                    tbl +='<tr>';
+                    tbl +='<th>Biz</th>';
+                    tbl +='<th>Add</th>';
+                    tbl +='<th>Area</th>';
+                    tbl +='<th>Tel</th>';
+                    tbl +='<th>Comments</th>';
+                    tbl +='<th>Date</th>';
+                    tbl +='<th>Email</th>';
+                    tbl +='<th>Name</th>';
+                    tbl +='<th>Visible</th>';
+                    tbl +='</tr>';
+                    tbl +='</thead>';
+                    //--->create table header > end
+
+
+                    //--->create table body > start
+                    tbl +='<tbody>';
+
+                    //--->create table body rows > start
+                    for (key in json_obj)
+                        {
+                            //you can replace with your database row id
+                            var row_id = random_id();
+
+                            //loop through ajax row data
+                            tbl +='<tr row_id="'+row_id+'">';
+                            tbl +='<td ><div class="row_data" edit_type="click" col_name="Key">'+key+'</div></td>';
+                            tbl +='<td ><div class="row_data" edit_type="click" col_name="add">' +json_obj[key][1]+'</div></td>';
+                            tbl +='<td ><div class="row_data" edit_type="click" col_name="area">' +json_obj[key][2]+'</div></td>';
+                            tbl +='<td ><div class="row_data" edit_type="click" col_name="tel">' +json_obj[key][3]+'</div></td>';
+                            tbl +='<td ><div class="row_data" edit_type="click" col_name="comments">' +json_obj[key][4]+'</div></td>';
+                            tbl +='<td ><div class="row_data" edit_type="click" col_name="date">' +json_obj[key][5]+'</div></td>';
+                            tbl +='<td ><div class="row_data" edit_type="click" col_name="email">' +json_obj[key][6]+'</div></td>';
+                            tbl +='<td ><div class="row_data" edit_type="click" col_name="name">' +json_obj[key][7]+'</div></td>';
+                            tbl +='<td ><div class="row_data" edit_type="click" col_name="show">'+json_obj[key][0]+'</div></td>';
+                            checked = (json_obj[key][0]==1)?'checked' :'';
+                            tbl +='<td ><input type="checkbox" name="cb"'+checked+'></td>';
+                            tbl +='<td><span class="btn_remove"> <a href="#" class="btn btn-link">X</a></span></td>';
+                            tbl +='</tr>';
+                        }
+
+                        //--->create table body rows > end
+
+                        tbl +='</tbody>';
+                        //--->create table body > end
+
+                        tbl +='</table>'
+                        //--->create data table > end
+
+                        //out put table data
+                        document.getElementById("tbl").innerHTML = "";
+                        $(document).find('.tbl_user_data').html(tbl);
+
+                        //--->make div editable > start
+                        $(document).on('click', '.row_data', function(event)
+                        {
+                            event.preventDefault();
+
+                            if($(this).attr('edit_type') == 'button')
+                            {
+                                return false;
+                            }
+
+                            //// all row editable
+                            ////make div editable
+                            //$(this).closest('div').attr('contenteditable', 'true');
+                            ////add bg css
+                            //$(this).addClass('bg-warning').css('padding','5px');
+
+                            // only second and third cell editable
+                            var tbl_row = $(this).closest('tr');
+                            tbl_row.find('.row_data').each(function (index, val) {
+                                if (index > 0) {
+                                    //this will help in case user decided to click on cancel button
+                                    $(this)
+                                            .attr('contenteditable', 'true')
+                                    //.addClass('bg-warning')
+                                    //.css('padding', '3px')
+                                }
+                            });
+
+                            $(this).focus();
+                })
+                        //--->make div editable > end
+
+                        //--->remove row data > start
+                        $(document).on('click', '.btn_remove', function(event)
+                        {
+                            console.log('btn_remove...');
+                            event.preventDefault();
+                            var tbl_row = $(this).closest('tr');
+                            var cells = {};
+                            tbl_row.find('.row_data').each(function (index, val) {
+                                var col_name = $(this).attr('col_name');
+                                var col_val  = stripHtml($(this).html());
+                                cells[col_name] =col_val;
+                                console.log('cells[' + col_name + ']=' + col_val);
+                            });
+                            key = cells['Key']
+                            msg = 'Are you sure to remove '+ key
+                            var r = confirm(msg);
+
+                            if (r == true) {
+                                console.log("You pressed OK!")
+                            } else {
+                                console.log("You pressed Cancel!")
+                                return
+                            }
+                            console.log(json_obj)
+                            delete json_obj[key]
+                            console.log(json_obj)
+                            saveToFile(json_obj, crt_sub_cat_path);
+                            //window.location.reload(true)
+                        })
+                        //--->remove row data > end
+
+                        //--->save single field data > start
+                        $(document).on('focusout', '.row_data', function(event)
+                        {
+                            console.log('focusout...');
+
+                            event.preventDefault();
+
+                            if($(this).attr('edit_type') == 'button')
+                            {
+                                return false;
+                            }
+
+                            var row_id = $(this).closest('tr').attr('row_id');
+
+                            var row_div = $(this)
+                                    .removeClass('bg-warning') //add bg css
+                                    .css('padding','')
+
+                            var col_name = row_div.attr('col_name');
+                            console.log('col_name='+col_name)
+
+                            //var col_val = row_div.html();
+                            var col_val = row_div[0].innerText;
+                            console.log('col_val='+col_val)
+
+                            var arr = {};
+                            arr[col_name] = col_val;
+
+                            //use the "arr"	object for your ajax call
+                            $.extend(arr, {row_id:row_id});
+
+                            //out put to show
+                            $('.post_msg').html('<pre class="bg-success">' + JSON.stringify(arr, null, 2) + '</pre>');
+
+                            var tbl_row = $(this).closest('tr');
+                            var cells = {};
+                            tbl_row.find('.row_data').each(function (index, val) {
+                                var col_name = $(this).attr('col_name');
+                                var col_val  = stripHtml($(this).html());
+                                cells[col_name] =col_val;
+                                console.log('cells[' + col_name + ']=' + col_val);
+                            });
+
+                            var update=false;
+                            key = cells['Key']
+                            console.log('key='+key)
+                            if( json_obj[key][0]!=Number(cells['show']) ||
+                                    json_obj[key][1]!=cells['add'] ||
+                                    json_obj[key][2]!=cells['area'] ||
+                                    json_obj[key][3]!=cells['tel'] ||
+                                    json_obj[key][4]!=cells['comments'] ||
+                                    json_obj[key][5]!=cells['date'] ||
+                                    json_obj[key][6]!=cells['email'] ||
+                                    json_obj[key][7]!=cells['name']
+                                    )
+                                update=true;
+
+                            if(update){
+                                json_obj[key][0]=Number(cells['show']);
+                                json_obj[key][1]=cells['add'];
+                                json_obj[key][2]=Number(cells['area']);
+                                json_obj[key][3]=cells['tel'];
+                                json_obj[key][4]=cells['comments'];
+                                json_obj[key][5]=cells['date'];
+                                json_obj[key][6]=cells['email'];
+                                json_obj[key][7]=cells['name'];
+                                for (k in json_obj){
+                                    console.log("k=" + k + " json_obj[k][0]="+json_obj[k][0]);
+                                }
+                                console.log(window.location.pathname)
+                                console.log('call saveToFile...pwd=<'.concat(window.location.pathname,'>'))
+                                console.log('call saveToFile...crt_sub_cat_path=<'.concat(crt_sub_cat_path,'>'))
+                                saveToFile(json_obj, crt_sub_cat_path);
+                            }
+                })
+                //--->save single field data > end
+
+                });
+                 }
+       });
+    }
+});
+</script>
+
+
+<div class="g-signin2 rtl" data-onsuccess="onSignIn"></div>
+<div class="rtl"><a href="#" onclick="signOut();">Sign out</a></div>
+
+<div class="panel panel-default rtl">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-md-10 col-sm-10">
+                <h4>Manage Your Text Data</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="input-group categories" style="width: 300px">
+<!--        <div style="width: 100px">-->
+<!--            <label class="input-group-text">קטגוריה</label>-->
+<!--        </div>-->
+<!--        <select class="custom-select cat">-->
+<!--            <option selected>נא לבחור אחד מהרשימה</option>-->
+<!--            <option value="gmahim">גמחים</option>-->
+<!--            <option value="knesset">בתי כנסת</option>-->
+<!--            <option value="biz">בית עסק</option>-->
+<!--        </select>-->
+    </div>
+
+    <div class="input-group sub_categories" style="width: 300px">
+<!--        <div style="width: 100px">-->
+<!--            <label class="input-group-text">תת קטגוריה</label>-->
+<!--        </div>-->
+<!--        <select class="custom-select sub_cat">-->
+<!--            <option selected>נא לבחור אחד מהרשימה</option>-->
+<!--            <option value="tables">שולחן</option>-->
+<!--            <option value="chairs">כסאות</option>-->
+<!--        </select>-->
+    </div>
+
+    <div id="div_data" class="panel-body">
+        <div id="tbl" class="tbl_user_data"></div>
+    </div>
+</div>
+<div class="panel panel-default rtl">
+    <div class="panel-heading"><b>HTML Table Edits/Upates</b> </div>
+
+    <div class="panel-body">
+
+        <p>All the changes will be displayed below</p>
+        <div class="post_msg"> </div>
+
+    </div>
+</div>
+
+</body>
+</html>

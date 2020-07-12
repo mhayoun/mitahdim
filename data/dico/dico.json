@@ -1,0 +1,18 @@
+{
+  "area": [ "שכונות", "Area" ],
+  "area0.json": [ "קריית מנחם", "Kiryat Menachem" ],
+  "area1.json": [ "קריית יובל", "Kiryat Yovel" ],
+  "area2.json": [ "עיר גנים", "Yir Ganim" ],
+  "gmahim": [ "גמחים", "Gmahim" ],
+  "chairs.json": [ "כסאות", "Chairs" ],
+  "tables.json": [ "שולחנות", "Tables" ],
+  "info": [ "מידע", "Infos" ],
+  "knesset.json": [ "בית הכנסת", "Bet Aknesset" ],
+  "biz": [ "בתי עסק", "business" ],
+  "electricity.json": [ "חשמל", "Electricity" ],
+  "installators.json": [ "אינסלתור", "Installators" ],
+  "hougim": [ "חוגים", "hougim" ],
+  "test": [ "test1", "test2" ],
+  "chirim.json": [ "שירים", "Chirim" ],
+  "drawing.json": [ "ציור", "drawing" ]
+}

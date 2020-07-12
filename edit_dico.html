@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<!--https://codewithmark.com/easily-edit-html-table-rows-or-cells-with-jquery-->
+<!--https://www.tutorialrepublic.com/faq/how-to-get-the-value-of-selected-option-in-a-select-box-using-jquery.php-->
+<head>
+    <meta charset="UTF-8">
+    <title>dico</title>
+
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css">-->
+
+    <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.min.css" >
+    <link rel="stylesheet" href="css/bootstrap-rtl.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript" src="js/my_utils.js"></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id" content="929259322531-d1kkcd4mb92naltvu8i4t6ecbjih0jem.apps.googleusercontent.com">
+</head>
+
+<body>
+
+<script type="text/javascript">
+$(document).ready(function($)
+{
+    var dico_path_file = 'data/dico/dico.json'
+    call_loadJSON(dico_path_file);
+    
+    call_refresh_json(dico_path_file)
+
+    function call_loadJSON(json_file){
+        console.log('call_loadJSON...json_file=<'.concat(json_file,'>'))
+        console.log('call_loadJSON...pwd = <'.concat(window.location.pathname,'>'))
+        loadJSON(json_file, function (json_string) {
+            // Parse json_string into object
+            console.log('json_string='+json_string)
+            var json_obj = JSON.parse(json_string);
+
+            var random_id = function  (){
+                var id_num = Math.random().toString(9).substr(2,3);
+                var id_str = Math.random().toString(36).substr(2);
+                return id_num + id_str;
+            }
+        
+            //--->create data table > start
+            var tbl = '';
+            tbl += '<table class="table table-hover">';
+            //--->create table header > start
+            tbl +='<thead>';
+            tbl +='<tr>';
+            tbl +='<th>key</th>';
+            tbl +='<th>Hebrew</th>';
+            tbl +='<th>English</th>';
+            tbl +='</tr>';
+            tbl +='</thead>';
+            //--->create table header > end
+
+            //--->create table body > start
+            tbl +='<tbody>';
+            for (key in json_obj){
+
+                //you can replace with your database row id
+                var row_id = random_id();
+
+                //loop through ajax row data
+                tbl +='<tr row_id="'+row_id+'">';
+                tbl +='<td><div class="row_data" edit_type="click" col_name="Key">' + key +'</div></td>';
+                tbl +='<td><div class="row_data" edit_type="click" col_name="Heb">'+json_obj[key][0]+'</div></td>';
+                tbl +='<td><div class="row_data" edit_type="click" col_name="Eng">'+json_obj[key][1]+'</div></td>';
+                tbl +='<td><span class="btn_remove"> <a href="#" class="btn btn-link ">X</a> </span></td>';
+                tbl +='</tr>';
+            }
+            //--->create table body rows > end
+            tbl +='</tbody>';
+            //--->create table body > end
+            tbl +='</table>'
+            //--->create data table > end
+
+            //out put table data
+            document.getElementById("tbl").innerHTML = "";
+            $(document).find('.tbl_user_data').html(tbl);
+
+            //--->make div editable > start
+            $(document).on('click', '.row_data', function(event)
+            {
+                event.preventDefault();
+
+                if($(this).attr('edit_type') == 'button')
+                {
+                    return false;
+                }
+
+                // only second and third cell editable
+                var tbl_row = $(this).closest('tr');
+                tbl_row.find('.row_data').each(function (index, val) {
+                    if (index > 0) {
+                        //this will help in case user decided to click on cancel button
+                        $(this)
+                            .attr('contenteditable', 'true')
+                    }
+                });
+
+                $(this).focus();
+            })
+            //--->make div editable > end
+            //--->remove row data > start
+            $(document).on('click', '.btn_remove', function(event)
+            {
+                console.log('btn_remove...');
+                event.preventDefault();
+                var tbl_row = $(this).closest('tr');
+                var cells = {};
+                tbl_row.find('.row_data').each(function (index, val) {
+                    var col_name = $(this).attr('col_name');
+                    var col_val  = stripHtml($(this).html());
+                    cells[col_name] =col_val;
+                    console.log('cells[' + col_name + ']=' + col_val);
+                });
+                key = cells['Key']
+                msg = 'Are you sure to remove '+ key
+                var r = confirm(msg);
+
+                if (r == true) {
+                    console.log("You pressed OK!")
+                } else {
+                    console.log("You pressed Cancel!")
+                    return
+                }
+                console.log(json_obj)
+                delete json_obj[key]
+                console.log(json_obj)
+                saveToFile(json_obj, dico_path_file);
+                //window.location.reload(true)
+            })
+
+            //--->save single field data > start
+            $(document).on('focusout', '.row_data', function(event)
+            {
+                console.log('focusout...');
+
+                event.preventDefault();
+
+                if($(this).attr('edit_type') == 'button')
+                {
+                    return false;
+                }
+
+                var row_id = $(this).closest('tr').attr('row_id');
+
+                var row_div = $(this)
+                    .removeClass('bg-warning') //add bg css
+                    .css('padding','')
+
+                var col_name = row_div.attr('col_name');
+                console.log('col_name='+col_name)
+
+                //var col_val = row_div.html();
+                var col_val = row_div[0].innerText;
+                console.log('col_val='+col_val)
+
+                var arr = {};
+                arr[col_name] = col_val;
+
+                //use the "arr"	object for your ajax call
+                $.extend(arr, {row_id:row_id});
+
+                //out put to show
+                $('.post_msg').html('<pre class="bg-success">' + JSON.stringify(arr, null, 2) + '</pre>');
+
+                var tbl_row = $(this).closest('tr');
+                var cells = {};
+                tbl_row.find('.row_data').each(function (index, val) {
+                    var col_name = $(this).attr('col_name');
+                    var col_val  = stripHtml($(this).html());
+                    cells[col_name] =col_val;
+                    console.log('cells[' + col_name + ']=' + col_val);
+                });
+
+                var update=false;
+                key = cells['Key']
+                console.log('key='+key)
+                if( json_obj[key][0]!=cells['Heb'] ||
+                    json_obj[key][1]!=cells['Eng']
+                )
+                update=true;
+
+                if(update){
+                    json_obj[key][0]=cells['Heb'];
+                    json_obj[key][1]=cells['Eng'];
+
+                    console.log(window.location.pathname)
+                    console.log('call saveToFile...pwd=<'.concat(window.location.pathname,'>'))
+                    console.log('call saveToFile...dico_path_file=<'.concat(dico_path_file,'>'))
+                    saveToFile(json_obj, dico_path_file);
+                }
+            })
+            //--->save single field data > end
+        });
+    }
+    
+    function call_refresh_json(json_file){
+        refresh_json(json_file)
+    }
+});
+</script>
+
+
+<div class="g-signin2 rtl" data-onsuccess="onSignIn"></div>
+<div class="rtl"><a href="#" onclick="signOut();">Sign out</a></div>
+
+<script>
+</script>
+
+<div class="panel panel-default rtl">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-md-10 col-sm-10">
+                <h4>Manage Your Text Data</h4>
+            </div>
+        </div>
+    </div>
+
+    <div id="div_data" class="panel-body">
+        <div id="tbl" class="tbl_user_data"></div>
+    </div>
+</div>
+<div class="panel panel-default rtl">
+    <div class="panel-heading"><b>HTML Table Edits/Upates</b> </div>
+
+    <div class="panel-body">
+
+        <p>All the changes will be displayed below</p>
+        <div class="post_msg"> </div>
+
+    </div>
+</div>
+
+</body>
+</html>

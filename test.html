@@ -1,0 +1,142 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<!--    https://codewithmark.com/easily-edit-html-table-rows-or-cells-with-jquery-->
+
+<head>
+    <meta charset="UTF-8">
+    <title>update text</title>
+
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css">-->
+
+    <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.min.css" >
+    <!--<link rel="stylesheet" href="css/bootstrap-rtl.min.css">-->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript" src="js/my_utils.js"></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id" content="929259322531-d1kkcd4mb92naltvu8i4t6ecbjih0jem.apps.googleusercontent.com">
+
+    <script>
+        $(document).ready(function(){
+            $("select.cat").change(function(){
+                //var cat = $(this).children("option:selected").val();
+                var cat = $("select.cat").children("option:selected").val();
+                alert("You have selected the cat - " + cat);
+            });
+            $("select.sub_cat").change(function(){
+                var sub_cat = $(this).children("option:selected").val();
+                alert("You have selected the sub_cat - " + sub_cat);
+            });
+            $('#area li').each(function () {
+                console.log('id='+ this.id);  //id
+            });
+
+            $(".area li").click(function(){
+                var selText = $(this).text();///User selected value...****
+                console.log('selText='+selText)
+                var selVal = $(this).val();///User selected value...****
+                console.log('selVal='+selVal)
+                var selId = $(this).attr('id');
+                console.log('selId==='+selId)
+            });
+
+            $(".onlyone li").click(function(){
+                var selText = $(this).text();///User selected value...****
+                console.log('selText='+selText)
+                var selVal = $(this).val();///User selected value...****
+                console.log('selVal='+selVal)
+                var selId = $(this).attr('id');
+                console.log('selId = '+selId)
+            });
+
+        });
+    </script>
+
+</head>
+
+<body>
+
+<div>
+
+    <div class="input-group" style="width: 300px">
+        <div class="input-group-prepend">
+            <label class="input-group-text">קטגוריה</label>
+        </div>
+<!--        call javascript with onchange -->
+<!--        call jquery with class custom-select...-->
+        <select class="custom-select cat" id="cat" onchange="select_cat()">
+            <option selected>נא לבחור אחד מהרשימה</option>
+            <option value="gmahim">גמחים</option>
+            <option value="knesset">בתי כנסת</option>
+            <option value="business">בית עסק</option>
+        </select>
+    </div>
+
+    <div class="input-group" style="width: 300px">
+        <div class="input-group-prepend">
+            <label class="input-group-text">תת קטגוריה</label>
+        </div>
+        <select class="custom-select sub_cat" id="inputSubCategory">
+            <option selected>נא לבחור אחד מהרשימה</option>
+            <option value="tables">שולחן</option>
+            <option value="chairs">כסאות</option>
+        </select>
+    </div>
+
+    <div class="list-group list-group-flush">
+        <div class="accordion" id="accordionExample">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <a data-toggle="collapse" data-target="#collapse_0">שכונות &#x25BE</a>
+                    </h5>
+                </div>
+                <div id="collapse_0" class="collapse show">
+                    <!-- when click on item use area -->
+                    <ul class="list-group area">
+                        <li class="list-group-item" value="1" id="area_area0" >קריית מנחם</li>
+                        <li class="list-group-item" value="2" id="area_area1" >קריית יובל</li>
+                        <li class="list-group-item" value="3" id="area_area2" >עיר גנים</li>
+                    </ul>
+                </div>
+            </div>
+            <ul class="list-group onlyone">
+                <li class="list-group-item" value="1" id="knesset_knesset" >בית כנסת</li>
+                <li class="list-group-item" value="2" id="hougim_hougim" >חוגים</li>
+            </ul>
+        </div>
+    </div>
+
+
+    <div id="section_area_list">
+    <section class="page-section">
+        <div  class="container">
+            <div class="row justify-content-md-center">
+                <div class="col col-lg-2"></div>
+                <div class="col-md-auto">
+                    <select class="custom-select area" style="width: 150px">
+                        <option value="0">קריית מנחם</option>
+                        <option value="1">קריית יובל</option>
+                        <option value="2">עיר גנים</option>
+                    </select>
+                </div>
+                <div class="col col-lg-2"></div>
+            </div>
+        </div>
+    </section>
+    </div>
+</div>
+
+<script>
+    function myFunction(s) {
+        console.log(s);
+    }
+    function select_cat() {
+        var x = document.getElementById("cat");
+        var i = x.selectedIndex;
+        console.log(x.options[i].text);
+    }
+</script>
+
+</body>
+</html>
